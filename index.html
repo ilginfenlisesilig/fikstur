@@ -27,7 +27,7 @@
       color: #f5f5f5;
     }
 
-    /* 🔧 Tabloları hizalamak için eklendi */
+    /* 🔧 Ortalama ve hizalama düzeltmeleri */
     #tables-container {
       display: flex;
       flex-direction: column;
@@ -44,6 +44,7 @@
     }
 
     table {
+      table-layout: fixed; /* sabit kolon genişliği */
       border-collapse: collapse;
       width: 100%;
       background: #1a1a1a;
@@ -51,7 +52,7 @@
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
       min-width: 400px;
-      margin: 0 auto; /* merkezde hizalama */
+      margin: 0 auto;
     }
 
     th, td {
@@ -59,6 +60,8 @@
       border-bottom: 1px solid #333;
       text-align: center;
       white-space: nowrap;
+      width: 25%; /* her sütun eşit genişlikte */
+      box-sizing: border-box;
     }
 
     th {
@@ -103,6 +106,7 @@
     const gid = "574919767";
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
+    // Google Sheets aralık tanımları
     const ranges = {
       "9/A": { startRow: 3, endRow: 8, startCol: 1, endCol: 4 },
       "9/B": { startRow: 3, endRow: 8, startCol: 6, endCol: 9 },
@@ -157,6 +161,7 @@
             });
             tbody.appendChild(tr);
           });
+
           table.appendChild(tbody);
           wrapper.appendChild(table);
           container.appendChild(wrapper);
@@ -167,7 +172,7 @@
     }
 
     loadTables();
-    setInterval(loadTables, 60000);
+    setInterval(loadTables, 60000); // her 60 saniyede güncelle
   </script>
 
 </body>
