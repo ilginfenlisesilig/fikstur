@@ -79,12 +79,8 @@
     }
 
     @media (max-width: 600px) {
-      h1 {
-        font-size: 20px;
-      }
-      h2 {
-        font-size: 16px;
-      }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; }
       th, td {
         padding: 8px 6px;
         font-size: 12px;
@@ -107,34 +103,24 @@
         const res = await fetch(csvUrl);
         const text = await res.text();
         const rows = text.trim().split("\n").map(r => r.split(","));
-
         const container = document.getElementById("fixtures");
         container.innerHTML = "";
 
         let currentTable = null;
         let currentSection = null;
 
-        rows.forEach((row, i) => {
-          if (row[0].match(/^\d{1,2}\/?\d*[A-Z]*$/) || row[0].includes("Tarih")) {
-            // normal satırlar (maç bilgileri)
-            if (currentTable) {
-              const tr = document.createElement("tr");
-              row.forEach(cell => {
-                const td = document.createElement("td");
-                td.textContent = cell;
-                tr.appendChild(td);
-              });
-              currentTable.querySelector("tbody").appendChild(tr);
-            }
-          } else if (row[0].trim().match(/^\d{1,2}\/?[A-Z]$/) || row[0].trim().includes("/")) {
-            // hata önleme (bazı tablo ayırıcı satırlar)
-          } else if (row[0].trim() && !row[0].includes("Tarih") && row.length === 1) {
-            // yeni sınıf başlığı
+        const classNames = ["9/A", "9/B", "10/A", "10/B", "11/A", "11/B"];
+
+        rows.forEach(row => {
+          const firstCell = row[0].trim();
+
+          if (classNames.includes(firstCell)) {
+            // Yeni sınıf başlığı
             currentSection = document.createElement("div");
             currentSection.classList.add("class-section");
 
             const h2 = document.createElement("h2");
-            h2.textContent = row[0].trim();
+            h2.textContent = firstCell;
             currentSection.appendChild(h2);
 
             const tableWrapper = document.createElement("div");
@@ -155,13 +141,21 @@
 
             const tbody = document.createElement("tbody");
             table.appendChild(tbody);
+
             tableWrapper.appendChild(table);
             currentSection.appendChild(tableWrapper);
             container.appendChild(currentSection);
 
             currentTable = table;
-          } else if (i === 0 || row[0].includes("Tarih")) {
-            // başlık satırlarını atla
+          } else if (firstCell && currentTable && !firstCell.includes("Tarih")) {
+            // Maç satırı
+            const tr = document.createElement("tr");
+            row.slice(0, 4).forEach(cell => {
+              const td = document.createElement("td");
+              td.textContent = cell;
+              tr.appendChild(td);
+            });
+            currentTable.querySelector("tbody").appendChild(tr);
           }
         });
       } catch (err) {
