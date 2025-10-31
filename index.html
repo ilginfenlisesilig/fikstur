@@ -27,23 +27,31 @@
       color: #f5f5f5;
     }
 
+    /* 🔧 Tabloları hizalamak için eklendi */
+    #tables-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px;
+      width: 100%;
+    }
+
     .table-wrapper {
       width: 100%;
+      max-width: 800px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      margin-bottom: 25px;
     }
 
     table {
       border-collapse: collapse;
-      margin: 0 auto;
       width: 100%;
-      max-width: 800px;
       background: #1a1a1a;
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
       min-width: 400px;
+      margin: 0 auto; /* merkezde hizalama */
     }
 
     th, td {
@@ -95,7 +103,6 @@
     const gid = "574919767";
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
-    // Aralık tanımları
     const ranges = {
       "9/A": { startRow: 3, endRow: 8, startCol: 1, endCol: 4 },
       "9/B": { startRow: 3, endRow: 8, startCol: 6, endCol: 9 },
@@ -160,7 +167,7 @@
     }
 
     loadTables();
-    setInterval(loadTables, 60000); // her 60 saniyede güncelle
+    setInterval(loadTables, 60000);
   </script>
 
 </body>
