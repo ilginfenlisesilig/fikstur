@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IFL OKUL LİGİ GENEL FİKSTÜR</title>
+  <title>IFL Okul Ligi Genel Fikstür</title>
   <style>
     body {
       font-family: "Inter", sans-serif;
@@ -15,38 +15,35 @@
     }
 
     h1 {
-      font-size: 26px;
-      margin-bottom: 30px;
+      font-size: 24px;
+      margin-bottom: 25px;
       color: #f1f1f1;
       letter-spacing: 1px;
     }
 
-    .class-section {
-      margin-bottom: 40px;
-    }
-
     h2 {
+      margin: 30px 0 10px;
       font-size: 18px;
-      margin-bottom: 10px;
-      color: #ddd;
+      color: #f5f5f5;
     }
 
     .table-wrapper {
       width: 100%;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      margin-bottom: 25px;
     }
 
     table {
       border-collapse: collapse;
       margin: 0 auto;
       width: 100%;
-      max-width: 600px;
+      max-width: 800px;
       background: #1a1a1a;
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-      min-width: 360px;
+      min-width: 400px;
     }
 
     th, td {
@@ -79,95 +76,91 @@
     }
 
     @media (max-width: 600px) {
+      body { padding: 10px; }
       h1 { font-size: 20px; }
       h2 { font-size: 16px; }
-      th, td {
-        padding: 8px 6px;
-        font-size: 12px;
-      }
+      th, td { padding: 8px 6px; font-size: 12px; }
+      table { min-width: 320px; }
     }
   </style>
 </head>
 <body>
 
   <h1>IFL OKUL LİGİ GENEL FİKSTÜR</h1>
-  <div id="fixtures">Yükleniyor...</div>
+
+  <div id="tables-container">Yükleniyor...</div>
 
   <script>
     const sheetId = "1u_61M8yOpSrLxKZ_H7edc6U75cpYSa5BOscC9t85FEw";
     const gid = "574919767";
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
-    async function loadFixtures() {
+    // Aralık tanımları
+    const ranges = {
+      "9/A": { startRow: 3, endRow: 8, startCol: 1, endCol: 4 },
+      "9/B": { startRow: 3, endRow: 8, startCol: 6, endCol: 9 },
+      "10/A": { startRow: 13, endRow: 18, startCol: 1, endCol: 4 },
+      "10/B": { startRow: 13, endRow: 18, startCol: 6, endCol: 9 },
+      "11/A": { startRow: 23, endRow: 28, startCol: 1, endCol: 4 },
+      "11/B": { startRow: 23, endRow: 28, startCol: 6, endCol: 9 },
+    };
+
+    async function loadTables() {
       try {
         const res = await fetch(csvUrl);
         const text = await res.text();
-        const rows = text.trim().split("\n").map(r => r.split(","));
-        const container = document.getElementById("fixtures");
+        const rows = text.split("\n").map(r => r.split(","));
+
+        const container = document.getElementById("tables-container");
         container.innerHTML = "";
 
-        let currentTable = null;
-        let currentSection = null;
+        Object.keys(ranges).forEach((className) => {
+          const r = ranges[className];
+          const subRows = rows.slice(r.startRow - 1, r.endRow).map(row => row.slice(r.startCol - 1, r.endCol));
 
-        const classNames = ["9/A", "9/B", "10/A", "10/B", "11/A", "11/B"];
+          if (subRows.length === 0 || subRows[0].length === 0) return;
 
-        rows.forEach(row => {
-          const firstCell = (row[0] || "").trim();
+          const title = document.createElement("h2");
+          title.textContent = className;
+          container.appendChild(title);
 
-          if (!firstCell) return; // boş satırları atla
+          const wrapper = document.createElement("div");
+          wrapper.className = "table-wrapper";
 
-          if (classNames.includes(firstCell)) {
-            // Yeni sınıf
-            currentSection = document.createElement("div");
-            currentSection.classList.add("class-section");
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          const thr = document.createElement("tr");
 
-            const h2 = document.createElement("h2");
-            h2.textContent = firstCell;
-            currentSection.appendChild(h2);
+          subRows[0].forEach((header) => {
+            const th = document.createElement("th");
+            th.textContent = header.trim();
+            thr.appendChild(th);
+          });
 
-            const tableWrapper = document.createElement("div");
-            tableWrapper.classList.add("table-wrapper");
+          thead.appendChild(thr);
+          table.appendChild(thead);
 
-            const table = document.createElement("table");
-            const thead = document.createElement("thead");
-            const thr = document.createElement("tr");
-
-            ["Tarih", "Rakip", "Skor", "Sonuç"].forEach(h => {
-              const th = document.createElement("th");
-              th.textContent = h;
-              thr.appendChild(th);
-            });
-
-            thead.appendChild(thr);
-            table.appendChild(thead);
-
-            const tbody = document.createElement("tbody");
-            table.appendChild(tbody);
-
-            tableWrapper.appendChild(table);
-            currentSection.appendChild(tableWrapper);
-            container.appendChild(currentSection);
-
-            currentTable = table;
-          } else if (currentTable && firstCell.toLowerCase() !== "tarih") {
-            // Maç satırı
+          const tbody = document.createElement("tbody");
+          subRows.slice(1).forEach((row) => {
             const tr = document.createElement("tr");
-            row.slice(0, 4).forEach(cell => {
+            row.forEach((cell) => {
               const td = document.createElement("td");
-              td.textContent = cell;
+              td.textContent = cell.trim();
               tr.appendChild(td);
             });
-            currentTable.querySelector("tbody").appendChild(tr);
-          }
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          wrapper.appendChild(table);
+          container.appendChild(wrapper);
         });
       } catch (err) {
-        document.getElementById("fixtures").innerHTML =
-          "⚠️ Veri yüklenemedi: " + err.message;
+        document.getElementById("tables-container").innerHTML = "⚠️ Veri yüklenemedi: " + err.message;
       }
     }
 
-    loadFixtures();
-    setInterval(loadFixtures, 60000);
+    loadTables();
+    setInterval(loadTables, 60000); // her 60 saniyede güncelle
   </script>
 
 </body>
