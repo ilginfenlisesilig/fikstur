@@ -15,16 +15,27 @@
     }
 
     h1 {
-      font-size: 22px;
-      margin-bottom: 20px;
+      font-size: 24px;
+      margin-bottom: 30px;
       color: #f1f1f1;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
+    }
+
+    h2 {
+      font-size: 18px;
+      color: #f1f1f1;
+      margin: 25px 0 10px;
+      text-transform: uppercase;
+      border-bottom: 1px solid #333;
+      display: inline-block;
+      padding-bottom: 5px;
     }
 
     .table-wrapper {
       width: 100%;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      margin-bottom: 40px;
     }
 
     table {
@@ -73,7 +84,10 @@
         padding: 10px;
       }
       h1 {
-        font-size: 18px;
+        font-size: 20px;
+      }
+      h2 {
+        font-size: 16px;
       }
       th, td {
         padding: 8px 6px;
@@ -88,55 +102,73 @@
 <body>
 
   <h1>IFL OKUL LİGİ GENEL FİKSTÜR</h1>
-  <div class="table-wrapper">
-    <div id="table-container">Yükleniyor...</div>
-  </div>
+  <div id="fixtures">Yükleniyor...</div>
 
   <script>
     const sheetId = "1u_61M8yOpSrLxKZ_H7edc6U75cpYSa5BOscC9t85FEw";
     const gid = "574919767";
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
-    async function loadTable() {
+    async function loadFixtures() {
       try {
         const res = await fetch(csvUrl);
         const text = await res.text();
         const rows = text.trim().split("\n").map(r => r.split(","));
-        const table = document.createElement("table");
 
-        const thead = document.createElement("thead");
-        const thr = document.createElement("tr");
-        rows[0].forEach(h => {
-          const th = document.createElement("th");
-          th.textContent = h;
-          thr.appendChild(th);
-        });
-        thead.appendChild(thr);
-        table.appendChild(thead);
-
-        const tbody = document.createElement("tbody");
-        rows.slice(1).forEach(row => {
-          const tr = document.createElement("tr");
-          row.forEach(cell => {
-            const td = document.createElement("td");
-            td.textContent = cell;
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-
-        const container = document.getElementById("table-container");
+        const container = document.getElementById("fixtures");
         container.innerHTML = "";
-        container.appendChild(table);
+
+        let table, tbody;
+        rows.forEach((row, i) => {
+          // Sınıf başlığı satırı (ör: "9A SINIFI")
+          if (row.length === 1 && row[0].trim() !== "") {
+            if (table) container.appendChild(table); // önceki tabloyu ekle
+            const title = document.createElement("h2");
+            title.textContent = row[0].trim();
+            container.appendChild(title);
+
+            table = document.createElement("table");
+            tbody = document.createElement("tbody");
+            return;
+          }
+
+          // Tablo başlığı
+          if (i > 0 && row[0].toLowerCase().includes("tarih")) {
+            const thead = document.createElement("thead");
+            const tr = document.createElement("tr");
+            row.forEach(cell => {
+              const th = document.createElement("th");
+              th.textContent = cell.trim();
+              tr.appendChild(th);
+            });
+            thead.appendChild(tr);
+            table.appendChild(thead);
+            return;
+          }
+
+          // Normal tablo satırları
+          if (tbody && row.some(cell => cell.trim() !== "")) {
+            const tr = document.createElement("tr");
+            row.forEach(cell => {
+              const td = document.createElement("td");
+              td.textContent = cell.trim();
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          }
+        });
+
+        if (table) table.appendChild(tbody);
+        if (table) container.appendChild(table);
+
       } catch (err) {
-        document.getElementById("table-container").innerHTML =
+        document.getElementById("fixtures").innerHTML =
           "⚠️ Veri yüklenemedi: " + err.message;
       }
     }
 
-    loadTable();
-    setInterval(loadTable, 60000);
+    loadFixtures();
+    setInterval(loadFixtures, 60000);
   </script>
 
 </body>
