@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IFL OKUL LİGİ GENEL FİKSTÜR</title>
   <style>
     body {
@@ -112,10 +112,12 @@
         const classNames = ["9/A", "9/B", "10/A", "10/B", "11/A", "11/B"];
 
         rows.forEach(row => {
-          const firstCell = row[0].trim();
+          const firstCell = (row[0] || "").trim();
+
+          if (!firstCell) return; // boş satırları atla
 
           if (classNames.includes(firstCell)) {
-            // Yeni sınıf başlığı
+            // Yeni sınıf
             currentSection = document.createElement("div");
             currentSection.classList.add("class-section");
 
@@ -147,7 +149,7 @@
             container.appendChild(currentSection);
 
             currentTable = table;
-          } else if (firstCell && currentTable && !firstCell.includes("Tarih")) {
+          } else if (currentTable && firstCell.toLowerCase() !== "tarih") {
             // Maç satırı
             const tr = document.createElement("tr");
             row.slice(0, 4).forEach(cell => {
