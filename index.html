@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IFL Okul Ligi 1. Devre Fikstür</title>
+  <title>IFL Okul Ligi Genel Fikstür</title>
   <style>
     body {
       font-family: "Inter", sans-serif;
@@ -19,15 +19,9 @@
       margin-bottom: 25px;
       color: #f1f1f1;
       letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
-    h2 {
-      margin: 30px 0 10px;
-      font-size: 18px;
-      color: #f5f5f5;
-    }
-
-    /* 🔧 Ortalama ve hizalama düzeltmeleri */
     #tables-container {
       display: flex;
       flex-direction: column;
@@ -44,37 +38,42 @@
     }
 
     table {
-      table-layout: fixed; /* sabit kolon genişliği */
+      table-layout: fixed;
       border-collapse: collapse;
       width: 100%;
       background: #1a1a1a;
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-      min-width: 400px;
+      min-width: 450px;
       margin: 0 auto;
     }
 
     th, td {
-      padding: 10px 8px;
+      padding: 12px 8px;
       border-bottom: 1px solid #333;
       text-align: center;
       white-space: nowrap;
-      width: 25%; /* her sütun eşit genişlikte */
       box-sizing: border-box;
     }
+
+    /* Sütun genişlikleri görseldeki hiyerarşiye göre ayarlandı */
+    th:nth-child(1), td:nth-child(1) { width: 20%; } /* Tarih */
+    th:nth-child(2), td:nth-child(2) { width: 30%; font-weight: bold; } /* Ev Sahibi */
+    th:nth-child(3), td:nth-child(3) { width: 30%; font-weight: bold; } /* Deplasman */
+    th:nth-child(4), td:nth-child(4) { width: 20%; color: #ffcc00; } /* Skor */
 
     th {
       background: #222;
       color: #ccc;
       text-transform: uppercase;
-      font-size: 12px;
-      letter-spacing: 0.5px;
+      font-size: 13px;
+      letter-spacing: 1px;
     }
 
     td {
       color: #ddd;
-      font-size: 13px;
+      font-size: 14px;
     }
 
     tr:nth-child(even) {
@@ -86,93 +85,93 @@
       transition: 0.2s ease;
     }
 
+    .loading {
+      font-style: italic;
+      color: #888;
+    }
+
     @media (max-width: 600px) {
       body { padding: 10px; }
-      h1 { font-size: 20px; }
-      h2 { font-size: 16px; }
-      th, td { padding: 8px 6px; font-size: 12px; }
-      table { min-width: 320px; }
+      h1 { font-size: 18px; }
+      th, td { padding: 10px 5px; font-size: 12px; }
+      table { min-width: 350px; }
     }
   </style>
 </head>
 <body>
 
-  <h1>IFL OKUL LİGİ 1. DEVRE FİKSTÜR</h1>
+  <h1>IFL OKUL LİGİ GENEL FİKSTÜR</h1>
 
-  <div id="tables-container">Yükleniyor...</div>
+  <div id="tables-container">
+    <p class="loading">Fikstür güncelleniyor...</p>
+  </div>
 
   <script>
-    const sheetId = "1u_61M8yOpSrLxKZ_H7edc6U75cpYSa5BOscC9t85FEw";
-    const gid = "574919767";
+    // Google Sheet ID'niz (Aynı bıraktım)
+    const sheetId = "1yZsyrwflHIKO8OXZ3NRxJtYdTQDgbJGEVvIXPWtpeRs";
+    const gid = "0";
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
-    // Google Sheets aralık tanımları
-    const ranges = {
-      "9/A": { startRow: 3, endRow: 8, startCol: 1, endCol: 4 },
-      "9/B": { startRow: 3, endRow: 8, startCol: 6, endCol: 9 },
-      "10/A": { startRow: 13, endRow: 18, startCol: 1, endCol: 4 },
-      "10/B": { startRow: 13, endRow: 18, startCol: 6, endCol: 9 },
-      "11/A": { startRow: 23, endRow: 28, startCol: 1, endCol: 4 },
-      "11/B": { startRow: 23, endRow: 28, startCol: 6, endCol: 9 },
-    };
-
-    async function loadTables() {
+    async function loadFixture() {
       try {
         const res = await fetch(csvUrl);
         const text = await res.text();
-        const rows = text.split("\n").map(r => r.split(","));
+        
+        // Satırları ayır ve boş satırları temizle
+        const rows = text.split("\n")
+                         .map(r => r.split(","))
+                         .filter(row => row[0].trim() !== "");
 
         const container = document.getElementById("tables-container");
         container.innerHTML = "";
 
-        Object.keys(ranges).forEach((className) => {
-          const r = ranges[className];
-          const subRows = rows.slice(r.startRow - 1, r.endRow).map(row => row.slice(r.startCol - 1, r.endCol));
+        const wrapper = document.createElement("div");
+        wrapper.className = "table-wrapper";
 
-          if (subRows.length === 0 || subRows[0].length === 0) return;
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        const tbody = document.createElement("tbody");
 
-          const title = document.createElement("h2");
-          title.textContent = className;
-          container.appendChild(title);
-
-          const wrapper = document.createElement("div");
-          wrapper.className = "table-wrapper";
-
-          const table = document.createElement("table");
-          const thead = document.createElement("thead");
-          const thr = document.createElement("tr");
-
-          subRows[0].forEach((header) => {
-            const th = document.createElement("th");
-            th.textContent = header.trim();
-            thr.appendChild(th);
-          });
-
-          thead.appendChild(thr);
-          table.appendChild(thead);
-
-          const tbody = document.createElement("tbody");
-          subRows.slice(1).forEach((row) => {
-            const tr = document.createElement("tr");
-            row.forEach((cell) => {
-              const td = document.createElement("td");
-              td.textContent = cell.trim();
-              tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-          });
-
-          table.appendChild(tbody);
-          wrapper.appendChild(table);
-          container.appendChild(wrapper);
+        // Başlık Satırı (TARİH, EV SAHİBİ, DEPLASMAN, SKOR)
+        const headerRow = document.createElement("tr");
+        const headers = ["TARİH", "EV SAHİBİ", "DEPLASMAN", "SKOR"];
+        
+        headers.forEach(text => {
+          const th = document.createElement("th");
+          th.textContent = text;
+          headerRow.appendChild(th);
         });
+        thead.appendChild(headerRow);
+
+        // Veri Satırları (Sheets'teki ilk 4 sütunu çeker)
+        // Eğer Sheets'te başlık satırı varsa slice(1) yapın, yoksa slice(0)
+        rows.slice(1).forEach((row) => {
+          const tr = document.createElement("tr");
+          
+          // Sadece ilk 4 sütunu al (Tarih, Ev, Deplasman, Skor)
+          for (let i = 0; i < 4; i++) {
+            const td = document.createElement("td");
+            td.textContent = (row[i] || "").trim();
+            tr.appendChild(td);
+          }
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+        container.appendChild(wrapper);
+
       } catch (err) {
-        document.getElementById("tables-container").innerHTML = "⚠️ Veri yüklenemedi: " + err.message;
+        document.getElementById("tables-container").innerHTML = "⚠️ Veri çekilirken bir hata oluştu: " + err.message;
       }
     }
 
-    loadTables();
-    setInterval(loadTables, 60000); // her 60 saniyede güncelle
+    // İlk yükleme
+    loadFixture();
+    
+    // 60 saniyede bir otomatik yenileme
+    setInterval(loadFixture, 60000);
   </script>
 
 </body>
