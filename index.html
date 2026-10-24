@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: "Inter", sans-serif;
-      background-color: #121212;
+      background-color: #111;
       color: #eaeaea;
       text-align: center;
       padding: 20px;
@@ -21,9 +21,6 @@
       color: #ffffff;
       letter-spacing: 1px;
       text-transform: uppercase;
-      border-bottom: 2px solid #f39c12;
-      padding-bottom: 10px;
-      display: inline-block;
     }
 
     /* Alt Başlıklar da BEYAZ Yapıldı */
@@ -49,115 +46,13 @@
       max-width: 850px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     }
 
     table {
       table-layout: auto;
       border-collapse: collapse;
       width: 100%;
-      background: #1e1e1e;
+      background: #1a1a1a;
       border-radius: 8px;
       overflow: hidden;
-      margin: 0 auto;
-      border: 1px solid #333333;
-    }
-
-    th, td {
-      padding: 12px 10px;
-      border-bottom: 1px solid #333;
-      text-align: center;
-      white-space: nowrap;
-      box-sizing: border-box;
-    }
-
-    /* Tablo Üst Başlıkları BEYAZ */
-    th {
-      background: #252525;
-      color: #ffffff;
-      text-transform: uppercase;
-      font-size: 13px;
-      letter-spacing: 1px;
-    }
-
-    td {
-      color: #ddd;
-      font-size: 14px;
-    }
-
-    /* Puan Durumu Özel Vurguları */
-    .standings-table td:nth-child(2) {
-      font-weight: bold;
-      text-align: left;
-      padding-left: 15px;
-    }
-    
-    /* Puan Durumu P Sütunu SARI */
-    .standings-table th:nth-child(10),
-    .standings-table td:nth-child(10) {
-      color: #f39c12;
-      font-weight: bold;
-    }
-
-    /* Fikstür Özel Vurguları */
-    .fixture-table td:nth-child(2),
-    .fixture-table td:nth-child(3) {
-      font-weight: bold;
-    }
-    
-    /* Fikstür SKOR Sütunu SARI */
-    .fixture-table th:nth-child(4),
-    .fixture-table td:nth-child(4) {
-      color: #f39c12;
-      font-weight: bold;
-    }
-
-    tr:nth-child(even) {
-      background: #181818;
-    }
-
-    tr:hover {
-      background: rgba(243, 156, 18, 0.08);
-      transition: 0.2s ease;
-    }
-
-    .loading {
-      font-style: italic;
-      color: #888;
-    }
-
-    @media (max-width: 600px) {
-      body { padding: 10px; }
-      h1 { font-size: 20px; }
-      h2 { font-size: 16px; }
-      th, td { padding: 8px 5px; font-size: 12px; }
-    }
-  </style>
-</head>
-<body>
-
-  <h1>IFL OKUL LİGİ</h1>
-
-  <div class="container">
-    
-    <!-- PUAN DURUMU -->
-    <h2>PUAN DURUMU</h2>
-    <div class="table-wrapper">
-      <table class="standings-table">
-        <thead>
-          <tr>
-            <th>Sıra</th>
-            <th>Takım</th>
-            <th>OM</th>
-            <th>G</th>
-            <th>B</th>
-            <th>M</th>
-            <th>AG</th>
-            <th>YG</th>
-            <th>A</th>
-            <th>P</th>
-          </tr>
-        </thead>
-        <tbody id="standings-body">
-          <tr><td colspan="
+      box
