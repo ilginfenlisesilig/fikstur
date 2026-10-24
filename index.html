@@ -16,16 +16,19 @@
       margin: 0;
     }
 
-    /* Ana Başlık BEYAZ Yapıldı */
+    /* Ana Başlık */
     h1 {
-      font-size: 24px;
+      font-size: 32px;
       margin-bottom: 25px;
       color: #ffffff;
       letter-spacing: 1px;
       text-transform: uppercase;
+      display: inline-block;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #ffcc00;
     }
 
-    /* Alt Başlıklar da BEYAZ Yapıldı */
+    /* Alt Başlıklar */
     h2 {
       font-size: 18px;
       margin-top: 30px;
@@ -69,7 +72,7 @@
       box-sizing: border-box;
     }
 
-    /* Tablo Üst Başlıkları BEYAZ */
+    /* Tablo Üst Başlıkları */
     th {
       background: #222;
       color: #ffffff;
@@ -90,7 +93,7 @@
       padding-left: 15px;
     }
 
-    /* Puan Durumu P Sütunu SARI */
+    /* Puan Durumu P Sütunu */
     .standings-table th:nth-child(10),
     .standings-table td:nth-child(10) {
       color: #ffcc00;
@@ -103,7 +106,7 @@
       font-weight: bold;
     }
 
-    /* Fikstür SKOR Sütunu SARI */
+    /* Fikstür Skor Sütunu */
     .fixture-table th:nth-child(4),
     .fixture-table td:nth-child(4) {
       color: #ffcc00;
@@ -125,10 +128,22 @@
     }
 
     @media (max-width: 600px) {
-      body { padding: 10px; }
-      h1 { font-size: 20px; }
-      h2 { font-size: 16px; }
-      th, td { padding: 8px 5px; font-size: 12px; }
+      body {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      h2 {
+        font-size: 16px;
+      }
+
+      th, td {
+        padding: 8px 5px;
+        font-size: 12px;
+      }
     }
   </style>
 </head>
@@ -210,7 +225,10 @@
 
         for (let i = 0; i < 10; i++) {
           const td = document.createElement("td");
-          const val = r.c && r.c[i] ? (r.c[i].v !== null ? r.c[i].v : "") : "";
+          const val = r.c && r.c[i]
+            ? (r.c[i].v !== null ? r.c[i].v : "")
+            : "";
+
           td.textContent = val;
           tr.appendChild(td);
         }
