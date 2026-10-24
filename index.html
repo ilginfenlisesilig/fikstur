@@ -65,9 +65,10 @@
       box-sizing: border-box;
     }
 
+    /* Tablo Üst Başlıkları BEYAZ Yapıldı */
     th {
       background: #222;
-      color: #ccc;
+      color: #ffffff;
       text-transform: uppercase;
       font-size: 13px;
       letter-spacing: 1px;
@@ -84,9 +85,12 @@
       text-align: left;
       padding-left: 15px;
     }
-    .standings-table td:last-child {
-      font-weight: bold;
+    
+    /* Puan Durumu P Sütunu (10. sütun) SARI Yapıldı */
+    .standings-table th:nth-child(10),
+    .standings-table td:nth-child(10) {
       color: #ffcc00;
+      font-weight: bold;
     }
 
     /* Fikstür Özel Vurguları */
@@ -94,6 +98,9 @@
     .fixture-table td:nth-child(3) {
       font-weight: bold;
     }
+    
+    /* Fikstür SKOR Sütunu (4. sütun) SARI Yapıldı */
+    .fixture-table th:nth-child(4),
     .fixture-table td:nth-child(4) {
       color: #ffcc00;
       font-weight: bold;
@@ -174,14 +181,12 @@
   <script>
     const sheetId = "1apkYHb2JWHu-nR7ifZB6vJ5Me6pZTvVin_5FPlMzQg4";
 
-    // Google Visualization API kullanarak JSONP biçiminde güvenli veri çekme
     function fetchSheetData(range, callbackName) {
       const script = document.createElement('script');
       script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}`;
       document.body.appendChild(script);
     }
 
-    // Puan Durumu Callback (A2:J8 Aralığı)
     window.handleStandings = function(data) {
       const rows = data.table.rows;
       const tbody = document.getElementById("standings-body");
@@ -199,16 +204,14 @@
       });
     };
 
-    // Fikstür Callback (A11:D26 Aralığı)
     window.handleFixture = function(data) {
       const rows = data.table.rows;
       const tbody = document.getElementById("fixture-body");
       tbody.innerHTML = "";
 
-      // İlk satır başlık (TARİH, EV SAHİBİ, vs.) olduğu için 1. indeksten başlıyoruz
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i];
-        if (!r.c || !r.c[0] || !r.c[0].v) continue; // Boş satırları atla
+        if (!r.c || !r.c[0] || !r.c[0].v) continue;
 
         const tr = document.createElement("tr");
         for (let j = 0; j < 4; j++) {
@@ -226,10 +229,7 @@
       fetchSheetData("A11:D26", "handleFixture");
     }
 
-    // İlk Yükleme
     loadAllData();
-
-    // 60 Saniyede bir otomatik yenileme
     setInterval(loadAllData, 60000);
   </script>
 
