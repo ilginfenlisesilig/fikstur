@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IFL Okul Ligi 1. Devre Fikstür</title>
+  <title>IFL Okul Ligi - Puan Durumu ve Fikstür</title>
   <style>
     body {
       font-family: "Inter", sans-serif;
@@ -22,46 +22,48 @@
       text-transform: uppercase;
     }
 
-    #tables-container {
+    h2 {
+      font-size: 18px;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      color: #ffcc00;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 25px;
+      gap: 20px;
       width: 100%;
     }
 
     .table-wrapper {
       width: 100%;
-      max-width: 800px;
+      max-width: 850px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
 
     table {
-      table-layout: fixed;
+      table-layout: auto;
       border-collapse: collapse;
       width: 100%;
       background: #1a1a1a;
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-      min-width: 450px;
       margin: 0 auto;
     }
 
     th, td {
-      padding: 12px 8px;
+      padding: 12px 10px;
       border-bottom: 1px solid #333;
       text-align: center;
       white-space: nowrap;
       box-sizing: border-box;
     }
-
-    /* Sütun genişlikleri görseldeki hiyerarşiye göre ayarlandı */
-    th:nth-child(1), td:nth-child(1) { width: 20%; } /* Tarih */
-    th:nth-child(2), td:nth-child(2) { width: 30%; font-weight: bold; } /* Ev Sahibi */
-    th:nth-child(3), td:nth-child(3) { width: 30%; font-weight: bold; } /* Deplasman */
-    th:nth-child(4), td:nth-child(4) { width: 20%; color: #ffcc00; } /* Skor */
 
     th {
       background: #222;
@@ -74,6 +76,27 @@
     td {
       color: #ddd;
       font-size: 14px;
+    }
+
+    /* Puan Durumu Özel Vurguları */
+    .standings-table td:nth-child(2) {
+      font-weight: bold;
+      text-align: left;
+      padding-left: 15px;
+    }
+    .standings-table td:last-child {
+      font-weight: bold;
+      color: #ffcc00;
+    }
+
+    /* Fikstür Özel Vurguları */
+    .fixture-table td:nth-child(2),
+    .fixture-table td:nth-child(3) {
+      font-weight: bold;
+    }
+    .fixture-table td:nth-child(4) {
+      color: #ffcc00;
+      font-weight: bold;
     }
 
     tr:nth-child(even) {
@@ -92,86 +115,122 @@
 
     @media (max-width: 600px) {
       body { padding: 10px; }
-      h1 { font-size: 18px; }
-      th, td { padding: 10px 5px; font-size: 12px; }
-      table { min-width: 350px; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; }
+      th, td { padding: 8px 5px; font-size: 12px; }
     }
   </style>
 </head>
 <body>
 
-  <h1>IFL OKUL LİGİ 1. DEVRE FİKSTÜR</h1>
+  <h1>IFL OKUL LİGİ 1. DEVRE</h1>
 
-  <div id="tables-container">
-    <p class="loading">Fikstür güncelleniyor...</p>
+  <div class="container">
+    
+    <!-- PUAN DURUMU -->
+    <h2>PUAN DURUMU</h2>
+    <div class="table-wrapper">
+      <table class="standings-table">
+        <thead>
+          <tr>
+            <th>Sıra</th>
+            <th>Takım</th>
+            <th>OM</th>
+            <th>G</th>
+            <th>B</th>
+            <th>M</th>
+            <th>AG</th>
+            <th>YG</th>
+            <th>A</th>
+            <th>P</th>
+          </tr>
+        </thead>
+        <tbody id="standings-body">
+          <tr><td colspan="10" class="loading">Puan durumu yükleniyor...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FİKSTÜR -->
+    <h2>FİKSTÜR VE MAÇ SONUÇLARI</h2>
+    <div class="table-wrapper">
+      <table class="fixture-table">
+        <thead>
+          <tr>
+            <th>TARİH</th>
+            <th>EV SAHİBİ</th>
+            <th>DEPLASMAN</th>
+            <th>SKOR</th>
+          </tr>
+        </thead>
+        <tbody id="fixture-body">
+          <tr><td colspan="4" class="loading">Fikstür yükleniyor...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
   </div>
 
   <script>
-    // Google Sheet ID'niz (Aynı bıraktım)
     const sheetId = "1apkYHb2JWHu-nR7ifZB6vJ5Me6pZTvVin_5FPlMzQg4";
-    const gid = "0";
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
-    async function loadFixture() {
-      try {
-        const res = await fetch(csvUrl);
-        const text = await res.text();
-        
-        // Satırları ayır ve boş satırları temizle
-        const rows = text.split("\n")
-                         .map(r => r.split(","))
-                         .filter(row => row[0].trim() !== "");
-
-        const container = document.getElementById("tables-container");
-        container.innerHTML = "";
-
-        const wrapper = document.createElement("div");
-        wrapper.className = "table-wrapper";
-
-        const table = document.createElement("table");
-        const thead = document.createElement("thead");
-        const tbody = document.createElement("tbody");
-
-        // Başlık Satırı (TARİH, EV SAHİBİ, DEPLASMAN, SKOR)
-        const headerRow = document.createElement("tr");
-        const headers = ["TARİH", "EV SAHİBİ", "DEPLASMAN", "SKOR"];
-        
-        headers.forEach(text => {
-          const th = document.createElement("th");
-          th.textContent = text;
-          headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-
-        // Veri Satırları (Sheets'teki ilk 4 sütunu çeker)
-        // Eğer Sheets'te başlık satırı varsa slice(1) yapın, yoksa slice(0)
-        rows.slice(1).forEach((row) => {
-          const tr = document.createElement("tr");
-          
-          // Sadece ilk 4 sütunu al (Tarih, Ev, Deplasman, Skor)
-          for (let i = 0; i < 4; i++) {
-            const td = document.createElement("td");
-            td.textContent = (row[i] || "").trim();
-            tr.appendChild(td);
-          }
-          tbody.appendChild(tr);
-        });
-
-        table.appendChild(thead);
-        table.appendChild(tbody);
-        wrapper.appendChild(table);
-        container.appendChild(wrapper);
-
-      } catch (err) {
-        document.getElementById("tables-container").innerHTML = "⚠️ Veri çekilirken bir hata oluştu: " + err.message;
-      }
+    // Google Visualization API kullanarak JSONP biçiminde güvenli veri çekme
+    function fetchSheetData(range, callbackName) {
+      const script = document.createElement('script');
+      script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}`;
+      document.body.appendChild(script);
     }
 
-    // İlk yükleme
-    loadFixture();
-    
-    // 60 saniyede bir otomatik yenileme
-    setInterval(loadFixture, 60000);
+    // Puan Durumu Callback (A2:J8 Aralığı)
+    window.handleStandings = function(data) {
+      const rows = data.table.rows;
+      const tbody = document.getElementById("standings-body");
+      tbody.innerHTML = "";
+
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        for (let i = 0; i < 10; i++) {
+          const td = document.createElement("td");
+          const val = r.c && r.c[i] ? (r.c[i].v !== null ? r.c[i].v : "") : "";
+          td.textContent = val;
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+    };
+
+    // Fikstür Callback (A11:D26 Aralığı)
+    window.handleFixture = function(data) {
+      const rows = data.table.rows;
+      const tbody = document.getElementById("fixture-body");
+      tbody.innerHTML = "";
+
+      // İlk satır başlık (TARİH, EV SAHİBİ, vs.) olduğu için 1. indeksten başlıyoruz
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r.c || !r.c[0] || !r.c[0].v) continue; // Boş satırları atla
+
+        const tr = document.createElement("tr");
+        for (let j = 0; j < 4; j++) {
+          const td = document.createElement("td");
+          let val = r.c && r.c[j] ? (r.c[j].f ? r.c[j].f : (r.c[j].v !== null ? r.c[j].v : "")) : "";
+          td.textContent = val;
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    };
+
+    function loadAllData() {
+      fetchSheetData("A2:J8", "handleStandings");
+      fetchSheetData("A11:D26", "handleFixture");
+    }
+
+    // İlk Yükleme
+    loadAllData();
+
+    // 60 Saniyede bir otomatik yenileme
+    setInterval(loadAllData, 60000);
   </script>
 
 </body>
