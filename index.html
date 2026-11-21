@@ -9,11 +9,13 @@
   <style>
     body {
       font-family: "Inter", sans-serif;
-      background-color: #111;
+      background-color: #0b0b0b;
+      background-image: radial-gradient(circle at 50% 0%, rgba(255, 106, 0, 0.14) 0%, #0b0b0b 65%);
       color: #eaeaea;
       text-align: center;
       padding: 20px;
       margin: 0;
+      min-height: 100vh;
     }
 
     /* Ana Başlık */
@@ -25,7 +27,8 @@
       text-transform: uppercase;
       display: inline-block;
       padding-bottom: 10px;
-      border-bottom: 2px solid #ffcc00;
+      border-bottom: 2px solid #ff6a00;
+      text-shadow: 0 0 20px rgba(255, 106, 0, 0.25);
     }
 
     /* Alt Başlıklar */
@@ -57,7 +60,7 @@
       table-layout: auto;
       border-collapse: collapse;
       width: 100%;
-      background: #1a1a1a;
+      background: #181818;
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
@@ -66,7 +69,7 @@
 
     th, td {
       padding: 12px 10px;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid #2e2e2e;
       text-align: center;
       white-space: nowrap;
       box-sizing: border-box;
@@ -74,7 +77,7 @@
 
     /* Tablo Üst Başlıkları */
     th {
-      background: #222;
+      background: #202020;
       color: #ffffff;
       text-transform: uppercase;
       font-size: 13px;
@@ -96,7 +99,7 @@
     /* Puan Durumu P Sütunu */
     .standings-table th:nth-child(10),
     .standings-table td:nth-child(10) {
-      color: #ffcc00;
+      color: #ff8529;
       font-weight: bold;
     }
 
@@ -109,16 +112,16 @@
     /* Fikstür Skor Sütunu */
     .fixture-table th:nth-child(4),
     .fixture-table td:nth-child(4) {
-      color: #ffcc00;
+      color: #ff8529;
       font-weight: bold;
     }
 
     tr:nth-child(even) {
-      background: #181818;
+      background: #141414;
     }
 
     tr:hover {
-      background: #2a2a2a;
+      background: rgba(255, 106, 0, 0.1);
       transition: 0.2s ease;
     }
 
@@ -189,89 +192,3 @@
       <table class="fixture-table">
         <thead>
           <tr>
-            <th>TARİH</th>
-            <th>TAKIM 1</th>
-            <th>TAKIM 2</th>
-            <th>SKOR</th>
-          </tr>
-        </thead>
-
-        <tbody id="fixture-body">
-          <tr>
-            <td colspan="4" class="loading">Fikstür yükleniyor...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-  </div>
-
-  <script>
-    const sheetId = "1apkYHb2JWHu-nR7ifZB6vJ5Me6pZTvVin_5FPlMzQg4";
-
-    function fetchSheetData(range, callbackName) {
-      const script = document.createElement('script');
-      script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}`;
-      document.body.appendChild(script);
-    }
-
-    window.handleStandings = function(data) {
-      const rows = data.table.rows;
-      const tbody = document.getElementById("standings-body");
-      tbody.innerHTML = "";
-
-      rows.forEach(r => {
-        const tr = document.createElement("tr");
-
-        for (let i = 0; i < 10; i++) {
-          const td = document.createElement("td");
-          const val = r.c && r.c[i]
-            ? (r.c[i].v !== null ? r.c[i].v : "")
-            : "";
-
-          td.textContent = val;
-          tr.appendChild(td);
-        }
-
-        tbody.appendChild(tr);
-      });
-    };
-
-    window.handleFixture = function(data) {
-      const rows = data.table.rows;
-      const tbody = document.getElementById("fixture-body");
-      tbody.innerHTML = "";
-
-      for (let i = 1; i < rows.length; i++) {
-        const r = rows[i];
-
-        if (!r.c || !r.c[0] || !r.c[0].v) continue;
-
-        const tr = document.createElement("tr");
-
-        for (let j = 0; j < 4; j++) {
-          const td = document.createElement("td");
-
-          let val = r.c && r.c[j]
-            ? (r.c[j].f ? r.c[j].f : (r.c[j].v !== null ? r.c[j].v : ""))
-            : "";
-
-          td.textContent = val;
-          tr.appendChild(td);
-        }
-
-        tbody.appendChild(tr);
-      }
-    };
-
-    function loadAllData() {
-      fetchSheetData("A2:J8", "handleStandings");
-      fetchSheetData("A11:D26", "handleFixture");
-    }
-
-    loadAllData();
-    setInterval(loadAllData, 60000);
-  </script>
-
-</body>
-</html>
