@@ -226,13 +226,14 @@
   <script>
     const sheetId = "1apkYHb2JWHu-nR7ifZB6vJ5Me6pZTvVin_5FPlMzQg4";
 
-    function fetchSheetData(range, callbackName) {
+    function fetchSheetData(range, callbackName, noHeaders = false) {
       const oldScript = document.getElementById(`script-${callbackName}`);
       if (oldScript) oldScript.remove();
 
+      const headerParam = noHeaders ? "&headers=0" : "";
       const script = document.createElement('script');
       script.id = `script-${callbackName}`;
-      script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}&cb=${Date.now()}`;
+      script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}${headerParam}&cb=${Date.now()}`;
       document.body.appendChild(script);
     }
 
@@ -260,81 +261,27 @@
       });
     };
 
-    window.handleFixture = function(data) {
+    const classBlocks = [
+      { id: "9a",  title: "9/A FİKSTÜR",  range: "A12:C16" },
+      { id: "9b",  title: "9/B FİKSTÜR",  range: "A20:C24" },
+      { id: "10a", title: "10/A FİKSTÜR", range: "A28:C32" },
+      { id: "10b", title: "10/B FİKSTÜR", range: "A36:C40" },
+      { id: "11a", title: "11/A FİKSTÜR", range: "A44:C48" },
+      { id: "11b", title: "11/B FİKSTÜR", range: "A52:C56" }
+    ];
+
+    function initFixtureContainers() {
       const container = document.getElementById("fixtures-container");
-      if (!data || !data.table || !data.table.rows) {
-        container.innerHTML = `<div class="table-wrapper"><table class="fixture-table"><tbody><tr><td colspan="3" class="loading">Fikstür verisi bulunamadı.</td></tr></tbody></table></div>`;
-        return;
-      }
+      if (container.dataset.initialized === "true") return;
 
-      const rows = data.table.rows;
       container.innerHTML = "";
-
-      const getCell = (r, idx) => {
-        if (!r || !r.c || !r.c[idx]) return "";
-        if (r.c[idx].f !== undefined && r.c[idx].f !== null && String(r.c[idx].f).trim() !== "") {
-          return String(r.c[idx].f).trim();
-        }
-        if (r.c[idx].v !== undefined && r.c[idx].v !== null && String(r.c[idx].v).trim() !== "") {
-          return String(r.c[idx].v).trim();
-        }
-        return "";
-      };
-
-      const classOrder = ["9/A", "9/B", "10/A", "10/B", "11/A", "11/B"];
-      const groupedMatches = {
-        "9/A": [],
-        "9/B": [],
-        "10/A": [],
-        "10/B": [],
-        "11/A": [],
-        "11/B": []
-      };
-
-      let activeClass = null;
-
-      rows.forEach(r => {
-        const colA = getCell(r, 0); // Tabloda RAKİP
-        const colB = getCell(r, 1); // Tabloda TARİH
-        const colC = getCell(r, 2); // Tabloda SKOR
-
-        if (!colA && !colB && !colC) return;
-
-        const upperA = colA.toUpperCase();
-        const upperB = colB.toUpperCase();
-
-        // Sınıf başlığı kontrolü: "9/A FİKSTÜR", "9/B FİKSTÜR" vb.
-        const matchedClass = classOrder.find(cls => upperA.includes(cls));
-        if (matchedClass && !colB) {
-          activeClass = matchedClass;
-          return;
-        }
-
-        // Alt sütun başlığı satırını ("RAKİP | TARİH | SKOR") atla
-        if (upperA.includes("RAKİP") || upperB.includes("TARİH")) {
-          return;
-        }
-
-        // Geçerli maç satırı: colA = Rakip, colB = Tarih, colC = Skor
-        if (activeClass && colA && colB) {
-          groupedMatches[activeClass].push({
-            tarih: colB,
-            rakip: colA,
-            skor: colC
-          });
-        }
-      });
-
-      classOrder.forEach(cls => {
-        const matches = groupedMatches[cls];
-        if (!matches || matches.length === 0) return;
-
+      classBlocks.forEach(cls => {
         const block = document.createElement("div");
         block.className = "class-fixture-block";
 
         const title = document.createElement("div");
         title.className = "class-fixture-title";
-        title.textContent = `${cls} FİKSTÜR`;
+        title.textContent = cls.title;
         block.appendChild(title);
 
         const wrapper = document.createElement("div");
@@ -342,8 +289,6 @@
 
         const table = document.createElement("table");
         table.className = "fixture-table";
-
-        // İstenen sıra: TARİH (en solda) | RAKİP (ortada) | SKOR (en sağda)
         table.innerHTML = `
           <thead>
             <tr>
@@ -352,14 +297,10 @@
               <th>SKOR</th>
             </tr>
           </thead>
-          <tbody>
-            ${matches.map(m => `
-              <tr>
-                <td>${m.tarih}</td>
-                <td>${m.rakip}</td>
-                <td>${m.skor}</td>
-              </tr>
-            `).join("")}
+          <tbody id="fixture-body-${cls.id}">
+            <tr>
+              <td colspan="3" class="loading">Yükleniyor...</td>
+            </tr>
           </tbody>
         `;
 
@@ -368,14 +309,53 @@
         container.appendChild(block);
       });
 
-      if (!container.children.length) {
-        container.innerHTML = `<div class="table-wrapper"><table class="fixture-table"><tbody><tr><td colspan="3" class="loading">Gösterilecek fikstür satırı bulunamadı.</td></tr></tbody></table></div>`;
-      }
-    };
+      container.dataset.initialized = "true";
+    }
+
+    classBlocks.forEach(cls => {
+      window[`handleFixture_${cls.id}`] = function(data) {
+        const tbody = document.getElementById(`fixture-body-${cls.id}`);
+        if (!tbody || !data || !data.table || !data.table.rows) return;
+
+        tbody.innerHTML = "";
+        data.table.rows.forEach(r => {
+          if (!r.c) return;
+
+          const getCell = (idx) => {
+            if (!r.c[idx]) return "";
+            if (r.c[idx].f !== undefined && r.c[idx].f !== null && String(r.c[idx].f).trim() !== "") {
+              return String(r.c[idx].f).trim();
+            }
+            if (r.c[idx].v !== undefined && r.c[idx].v !== null && String(r.c[idx].v).trim() !== "") {
+              return String(r.c[idx].v).trim();
+            }
+            return "";
+          };
+
+          const rakip = getCell(0); // E-tabloda A sütunu: RAKİP
+          const tarih = getCell(1); // E-tabloda B sütunu: TARİH
+          const skor  = getCell(2); // E-tabloda C sütunu: SKOR
+
+          if (!rakip && !tarih) return;
+
+          const tr = document.createElement("tr");
+          // Sitede istenen sıra: TARİH (sol), RAKİP (orta), SKOR (sağ)
+          [tarih, rakip, skor].forEach(val => {
+            const td = document.createElement("td");
+            td.textContent = val;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      };
+    });
 
     function loadAllData() {
       fetchSheetData("A2:J8", "handleStandings");
-      fetchSheetData("A10:C65", "handleFixture");
+      initFixtureContainers();
+      classBlocks.forEach(cls => {
+        fetchSheetData(cls.range, `handleFixture_${cls.id}`, true);
+      });
     }
 
     loadAllData();
