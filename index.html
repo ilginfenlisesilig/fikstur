@@ -232,22 +232,24 @@
 
       const script = document.createElement('script');
       script.id = `script-${callbackName}`;
-      script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}`;
+      script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}&cb=${Date.now()}`;
       document.body.appendChild(script);
     }
 
     window.handleStandings = function(data) {
+      if (!data || !data.table || !data.table.rows) return;
       const rows = data.table.rows;
       const tbody = document.getElementById("standings-body");
       tbody.innerHTML = "";
 
       rows.forEach(r => {
+        if (!r.c) return;
         const tr = document.createElement("tr");
 
         for (let i = 0; i < 10; i++) {
           const td = document.createElement("td");
-          const val = r.c && r.c[i]
-            ? (r.c[i].v !== null ? r.c[i].v : "")
+          const val = r.c[i] && r.c[i].v !== null && r.c[i].v !== undefined
+            ? (r.c[i].f ? r.c[i].f : r.c[i].v)
             : "";
 
           td.textContent = val;
@@ -259,20 +261,66 @@
     };
 
     window.handleFixture = function(data) {
-      const rows = data.table.rows;
       const container = document.getElementById("fixtures-container");
+      if (!data || !data.table || !data.table.rows) {
+        container.innerHTML = `<div class="table-wrapper"><table class="fixture-table"><tbody><tr><td colspan="3" class="loading">Fikstür verisi bulunamadı.</td></tr></tbody></table></div>`;
+        return;
+      }
+
+      const rows = data.table.rows;
       container.innerHTML = "";
 
-      let currentBlockTitle = null;
+      let currentBlockTitle = "";
       let currentTbody = null;
+
+      function createClassTable(titleText, headers) {
+        const block = document.createElement("div");
+        block.className = "class-fixture-block";
+
+        if (titleText) {
+          const title = document.createElement("div");
+          title.className = "class-fixture-title";
+          title.textContent = titleText;
+          block.appendChild(title);
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "table-wrapper";
+
+        const table = document.createElement("table");
+        table.className = "fixture-table";
+
+        const thead = document.createElement("thead");
+        thead.innerHTML = `
+          <tr>
+            <th>${headers[0] || "RAKİP"}</th>
+            <th>${headers[1] || "TARİH"}</th>
+            <th>${headers[2] || "SKOR"}</th>
+          </tr>
+        `;
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        table.appendChild(tbody);
+
+        wrapper.appendChild(table);
+        block.appendChild(wrapper);
+        container.appendChild(block);
+
+        return tbody;
+      }
 
       rows.forEach(r => {
         if (!r.c) return;
 
         const getCell = (idx) => {
           if (!r.c[idx]) return "";
-          if (r.c[idx].f !== undefined && r.c[idx].f !== null) return String(r.c[idx].f).trim();
-          if (r.c[idx].v !== undefined && r.c[idx].v !== null) return String(r.c[idx].v).trim();
+          if (r.c[idx].f !== undefined && r.c[idx].f !== null && String(r.c[idx].f).trim() !== "") {
+            return String(r.c[idx].f).trim();
+          }
+          if (r.c[idx].v !== undefined && r.c[idx].v !== null && String(r.c[idx].v).trim() !== "") {
+            return String(r.c[idx].v).trim();
+          }
           return "";
         };
 
@@ -282,52 +330,33 @@
 
         if (!colA && !colB && !colC) return;
 
-        // Sınıf başlığı satırı (ör: "9/A FİKSTÜR")
-        if (colA.toUpperCase().includes("FİKSTÜR") && !colB) {
-          currentBlockTitle = colA;
+        const upperA = colA.toUpperCase();
+        const upperB = colB.toUpperCase();
+
+        // Sınıf etiketi satırı (ör: "9/A FİKSTÜR" veya "9/A")
+        if ((upperA.includes("FİKSTÜR") || /^\d+\/[AB]$/.test(colA)) && !colB) {
+          currentBlockTitle = upperA.includes("FİKSTÜR") ? colA : `${colA} FİKSTÜR`;
           currentTbody = null;
           return;
         }
 
         // Sütun başlığı satırı ("RAKİP | TARİH | SKOR")
-        if (colA.toUpperCase() === "RAKİP" && colB.toUpperCase() === "TARİH") {
-          const block = document.createElement("div");
-          block.className = "class-fixture-block";
-
-          if (currentBlockTitle) {
-            const title = document.createElement("div");
-            title.className = "class-fixture-title";
-            title.textContent = currentBlockTitle;
-            block.appendChild(title);
-          }
-
-          const wrapper = document.createElement("div");
-          wrapper.className = "table-wrapper";
-
-          const table = document.createElement("table");
-          table.className = "fixture-table";
-
-          const thead = document.createElement("thead");
-          thead.innerHTML = `
-            <tr>
-              <th>${colA}</th>
-              <th>${colB}</th>
-              <th>${colC || "SKOR"}</th>
-            </tr>
-          `;
-          table.appendChild(thead);
-
-          currentTbody = document.createElement("tbody");
-          table.appendChild(currentTbody);
-
-          wrapper.appendChild(table);
-          block.appendChild(wrapper);
-          container.appendChild(block);
+        if (upperA.includes("RAKİP") || upperB.includes("TARİH")) {
+          currentTbody = createClassTable(currentBlockTitle, [
+            colA || "RAKİP",
+            colB || "TARİH",
+            colC || "SKOR"
+          ]);
           return;
         }
 
-        // Maç satırı: [RAKİP, TARİH, SKOR]
-        if (currentTbody && colA && colB) {
+        // Eğer başlık satırı atlandıysa ama maç satırı (rakip + tarih) geldiyse otomatik tablo aç
+        if (!currentTbody && colA && colB) {
+          currentTbody = createClassTable(currentBlockTitle || "FİKSTÜR", ["RAKİP", "TARİH", "SKOR"]);
+        }
+
+        // Maç satırı ekle
+        if (currentTbody && (colA || colB)) {
           const tr = document.createElement("tr");
           [colA, colB, colC].forEach(val => {
             const td = document.createElement("td");
@@ -337,11 +366,15 @@
           currentTbody.appendChild(tr);
         }
       });
+
+      if (!container.children.length) {
+        container.innerHTML = `<div class="table-wrapper"><table class="fixture-table"><tbody><tr><td colspan="3" class="loading">Gösterilecek fikstür satırı bulunamadı.</td></tr></tbody></table></div>`;
+      }
     };
 
     function loadAllData() {
       fetchSheetData("A2:J8", "handleStandings");
-      fetchSheetData("A10:C56", "handleFixture");
+      fetchSheetData("A10:C65", "handleFixture");
     }
 
     loadAllData();
