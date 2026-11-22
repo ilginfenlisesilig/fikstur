@@ -125,16 +125,37 @@
       font-weight: bold;
     }
 
-    /* Fikstür Özel Vurguları: 1. Sütun Tarih, 2. Sütun Rakip, 3. Sütun Skor */
+    /* Fikstür Özel Vurguları: 1. Sütun Tarih, 2. Sütun Rakip, 3. Sütun Skor, 4. Sütun Sonuç */
     .fixture-table td:nth-child(2) {
       font-weight: bold;
     }
 
-    /* Fikstür Skor Sütunu (En Sağda) */
+    /* Fikstür Skor Sütunu */
     .fixture-table th:nth-child(3),
     .fixture-table td:nth-child(3) {
       color: #ff6a00;
       font-weight: bold;
+    }
+
+    /* Fikstür Sonuç Başlığı (Beyaz) ve Durum Renkleri */
+    .fixture-table th:nth-child(4) {
+      color: #ffffff;
+    }
+
+    .fixture-table td:nth-child(4) {
+      font-weight: bold;
+    }
+
+    .sonuc-galibiyet {
+      color: #22c55e !important;
+    }
+
+    .sonuc-beraberlik {
+      color: #eab308 !important;
+    }
+
+    .sonuc-maglubiyet {
+      color: #ef4444 !important;
     }
 
     tr:nth-child(even) {
@@ -214,7 +235,7 @@
         <table class="fixture-table">
           <tbody>
             <tr>
-              <td colspan="3" class="loading">Fikstür yükleniyor...</td>
+              <td colspan="4" class="loading">Fikstür yükleniyor...</td>
             </tr>
           </tbody>
         </table>
@@ -262,12 +283,12 @@
     };
 
     const classBlocks = [
-      { id: "9a",  title: "9/A FİKSTÜR",  range: "A12:C16" },
-      { id: "9b",  title: "9/B FİKSTÜR",  range: "A20:C24" },
-      { id: "10a", title: "10/A FİKSTÜR", range: "A28:C32" },
-      { id: "10b", title: "10/B FİKSTÜR", range: "A36:C40" },
-      { id: "11a", title: "11/A FİKSTÜR", range: "A44:C48" },
-      { id: "11b", title: "11/B FİKSTÜR", range: "A52:C56" }
+      { id: "9a",  title: "9/A FİKSTÜR",  range: "A12:D16" },
+      { id: "9b",  title: "9/B FİKSTÜR",  range: "A20:D24" },
+      { id: "10a", title: "10/A FİKSTÜR", range: "A28:D32" },
+      { id: "10b", title: "10/B FİKSTÜR", range: "A36:D40" },
+      { id: "11a", title: "11/A FİKSTÜR", range: "A44:D48" },
+      { id: "11b", title: "11/B FİKSTÜR", range: "A52:D56" }
     ];
 
     function initFixtureContainers() {
@@ -295,11 +316,12 @@
               <th>TARİH</th>
               <th>RAKİP</th>
               <th>SKOR</th>
+              <th>SONUÇ</th>
             </tr>
           </thead>
           <tbody id="fixture-body-${cls.id}">
             <tr>
-              <td colspan="3" class="loading">Yükleniyor...</td>
+              <td colspan="4" class="loading">Yükleniyor...</td>
             </tr>
           </tbody>
         `;
@@ -310,6 +332,14 @@
       });
 
       container.dataset.initialized = "true";
+    }
+
+    function getSonucClass(sonucText) {
+      const normalized = sonucText.toLocaleLowerCase("tr-TR").trim();
+      if (normalized === "galibiyet") return "sonuc-galibiyet";
+      if (normalized === "beraberlik") return "sonuc-beraberlik";
+      if (normalized === "mağlubiyet" || normalized === "maglubiyet") return "sonuc-maglubiyet";
+      return "";
     }
 
     classBlocks.forEach(cls => {
@@ -335,14 +365,19 @@
           const rakip = getCell(0); // E-tabloda A sütunu: RAKİP
           const tarih = getCell(1); // E-tabloda B sütunu: TARİH
           const skor  = getCell(2); // E-tabloda C sütunu: SKOR
+          const sonuc = getCell(3); // E-tabloda D sütunu: SONUÇ
 
           if (!rakip && !tarih) return;
 
           const tr = document.createElement("tr");
-          // Sitede istenen sıra: TARİH (sol), RAKİP (orta), SKOR (sağ)
-          [tarih, rakip, skor].forEach(val => {
+          // Sitede istenen sıra: TARİH, RAKİP, SKOR, SONUÇ
+          [tarih, rakip, skor, sonuc].forEach((val, idx) => {
             const td = document.createElement("td");
             td.textContent = val;
+            if (idx === 3 && val) {
+              const clsName = getSonucClass(val);
+              if (clsName) td.classList.add(clsName);
+            }
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
