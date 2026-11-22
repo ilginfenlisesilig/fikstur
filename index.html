@@ -278,53 +278,165 @@
       if (oldScript) oldScript.remove();
 
       const headerParam = noHeaders ? "&headers=0" : "";
-      const script = document.createElement('script');
+      const script = document.createElement("script");
       script.id = `script-${callbackName}`;
-      script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}${headerParam}&cb=${Date.now()}`;
+      script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}${headerParam}&t=${Date.now()}`;
       document.body.appendChild(script);
+    }
+
+    function cellVal(cell) {
+      if (!cell) return "";
+      if (cell.f !== undefined && cell.f !== null && String(cell.f).trim() !== "") {
+        return String(cell.f).trim();
+      }
+      if (cell.v !== undefined && cell.v !== null && String(cell.v).trim() !== "") {
+        return String(cell.v).trim();
+      }
+      return "";
     }
 
     window.handleStandings = function(data) {
       if (!data || !data.table || !data.table.rows) return;
-      const rows = data.table.rows;
       const tbody = document.getElementById("standings-body");
       tbody.innerHTML = "";
 
-      rows.forEach(r => {
-        if (!r.c) return;
-        const tr = document.createElement("tr");
+      data.table.rows.forEach(r => {
+        if (!r || !r.c) return;
+        const firstVal = cellVal(r.c[0]);
+        if (!firstVal) return;
 
+        const tr = document.createElement("tr");
         for (let i = 0; i < 10; i++) {
           const td = document.createElement("td");
-          const val = r.c[i] && r.c[i].v !== null && r.c[i].v !== undefined
-            ? (r.c[i].f ? r.c[i].f : r.c[i].v)
-            : "";
-
-          td.textContent = val;
+          td.textContent = cellVal(r.c[i]);
           tr.appendChild(td);
         }
-
         tbody.appendChild(tr);
       });
     };
 
-    const classBlocks = [
-      { id: "9a",  title: "9/A FİKSTÜR",  range: "A12:D16" },
-      { id: "9b",  title: "9/B FİKSTÜR",  range: "A20:D24" },
-      { id: "10a", title: "10/A FİKSTÜR", range: "A28:D32" },
-      { id: "10b", title: "10/B FİKSTÜR", range: "A36:D40" },
-      { id: "11a", title: "11/A FİKSTÜR", range: "A44:D48" },
-      { id: "11b", title: "11/B FİKSTÜR", range: "A52:D56" }
-    ];
+    function getSonucClass(sonucText) {
+      const normalized = sonucText.toLocaleLowerCase("tr-TR").trim();
+      if (normalized === "galibiyet") return "sonuc-galibiyet";
+      if (normalized === "beraberlik") return "sonuc-beraberlik";
+      if (normalized === "mağlubiyet" || normalized === "maglubiyet") return "sonuc-maglubiyet";
+      return "";
+    }
 
-    function initFixtureContainers() {
+    window.handleFixture = function(data) {
       const container = document.getElementById("fixtures-container");
-      if (container.dataset.initialized === "true") return;
+      if (!data || !data.table || !data.table.rows) return;
+
+      const classOrder = ["9/A", "9/B", "10/A", "10/B", "11/A", "11/B"];
+      const grouped = {
+        "9/A": [],
+        "9/B": [],
+        "10/A": [],
+        "10/B": [],
+        "11/A": [],
+        "11/B": []
+      };
+
+      let activeClass = null;
+
+      data.table.rows.forEach(r => {
+        if (!r || !r.c) return;
+        const colA = cellVal(r.c[0]); // RAKİP veya "9/A FİKSTÜR" veya "RAKİP"
+        const colB = cellVal(r.c[1]); // TARİH
+        const colC = cellVal(r.c[2]); // SKOR
+        const colD = cellVal(r.c[3]); // SONUÇ
+
+        if (!colA && !colB && !colC && !colD) return;
+
+        const upperA = colA.toLocaleUpperCase("tr-TR");
+        const upperB = colB.toLocaleUpperCase("tr-TR");
+
+        // Sınıf başlığı satırı ("9/A FİKSTÜR" vb.)
+        const foundClass = classOrder.find(cls => upperA.includes(cls));
+        if (foundClass && !colB) {
+          activeClass = foundClass;
+          return;
+        }
+
+        // Sütun başlığı satırını atla
+        if (upperA.includes("RAKİP") || upperB.includes("TARİH")) {
+          return;
+        }
+
+        // Maç satırı: aktif sınıfa ekle
+        if (activeClass && (colA || colB)) {
+          grouped[activeClass].push({
+            tarih: colB,
+            rakip: colA,
+            skor: colC,
+            sonuc: colD
+          });
+        }
+      });
 
       container.innerHTML = "";
-      classBlocks.forEach(cls => {
+
+      classOrder.forEach(cls => {
+        const matches = grouped[cls];
+        if (!matches || matches.length === 0) return;
+
         const block = document.createElement("div");
         block.className = "class-fixture-block";
 
         const title = document.createElement("div");
-        title.className
+        title.className = "class-fixture-title";
+        title.textContent = `${cls} FİKSTÜR`;
+        block.appendChild(title);
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "table-wrapper";
+
+        const table = document.createElement("table");
+        table.className = "fixture-table";
+
+        const rowsHtml = matches.map(m => {
+          const sonucCls = getSonucClass(m.sonuc);
+          const sonucAttr = sonucCls ? ` class="${sonucCls}"` : "";
+          return `
+            <tr>
+              <td>${m.tarih}</td>
+              <td>${m.rakip}</td>
+              <td>${m.skor}</td>
+              <td${sonucAttr}>${m.sonuc}</td>
+            </tr>
+          `;
+        }).join("");
+
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>TARİH</th>
+              <th>RAKİP</th>
+              <th>SKOR</th>
+              <th>SONUÇ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        `;
+
+        wrapper.appendChild(table);
+        block.appendChild(wrapper);
+        container.appendChild(block);
+      });
+    };
+
+    function loadAllData() {
+      fetchSheetData("A3:J8", "handleStandings", true);
+      setTimeout(() => {
+        fetchSheetData("A10:D56", "handleFixture", true);
+      }, 250);
+    }
+
+    loadAllData();
+    setInterval(loadAllData, 60000);
+  </script>
+
+</body>
+</html>
