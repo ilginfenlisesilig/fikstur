@@ -55,6 +55,29 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    #fixtures-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .class-fixture-block {
+      width: 100%;
+      max-width: 850px;
+    }
+
+    .class-fixture-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #ff6a00;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 4px;
+      text-align: left;
+    }
+
     table {
       table-layout: auto;
       border-collapse: collapse;
@@ -187,23 +210,16 @@
     <!-- FİKSTÜR -->
     <h2>FİKSTÜR VE MAÇ SONUÇLARI</h2>
 
-    <div class="table-wrapper">
-      <table class="fixture-table">
-        <thead>
-          <tr>
-            <th>TARİH</th>
-            <th>TAKIM 1</th>
-            <th>TAKIM 2</th>
-            <th>SKOR</th>
-          </tr>
-        </thead>
-
-        <tbody id="fixture-body">
-          <tr>
-            <td colspan="4" class="loading">Fikstür yükleniyor...</td>
-          </tr>
-        </tbody>
-      </table>
+    <div id="fixtures-container">
+      <div class="table-wrapper">
+        <table class="fixture-table">
+          <tbody>
+            <tr>
+              <td colspan="4" class="loading">Fikstür yükleniyor...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -212,7 +228,11 @@
     const sheetId = "1apkYHb2JWHu-nR7ifZB6vJ5Me6pZTvVin_5FPlMzQg4";
 
     function fetchSheetData(range, callbackName) {
+      const oldScript = document.getElementById(`script-${callbackName}`);
+      if (oldScript) oldScript.remove();
+
       const script = document.createElement('script');
+      script.id = `script-${callbackName}`;
       script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&range=${range}`;
       document.body.appendChild(script);
     }
@@ -241,34 +261,82 @@
 
     window.handleFixture = function(data) {
       const rows = data.table.rows;
-      const tbody = document.getElementById("fixture-body");
-      tbody.innerHTML = "";
+      const container = document.getElementById("fixtures-container");
+      container.innerHTML = "";
 
-      for (let i = 1; i < rows.length; i++) {
-        const r = rows[i];
+      let currentTbody = null;
 
-        if (!r.c || !r.c[0] || !r.c[0].v) continue;
+      rows.forEach(r => {
+        if (!r.c) return;
 
-        const tr = document.createElement("tr");
+        const getCell = (idx) => {
+          if (!r.c[idx]) return "";
+          if (r.c[idx].f !== undefined && r.c[idx].f !== null) return String(r.c[idx].f).trim();
+          if (r.c[idx].v !== undefined && r.c[idx].v !== null) return String(r.c[idx].v).trim();
+          return "";
+        };
 
-        for (let j = 0; j < 4; j++) {
-          const td = document.createElement("td");
+        const colA = getCell(0); // Örn: "9/A FİKSTÜR" veya "1. Maç"
+        const colB = getCell(1); // TARİH
+        const colC = getCell(2); // TAKIM 1
+        const colD = getCell(3); // TAKIM 2
+        const colE = getCell(4); // SKOR
 
-          let val = r.c && r.c[j]
-            ? (r.c[j].f ? r.c[j].f : (r.c[j].v !== null ? r.c[j].v : ""))
-            : "";
+        // Boş satırları atla
+        if (!colA && !colB && !colC && !colD) return;
 
-          td.textContent = val;
-          tr.appendChild(td);
+        // Yeni sınıf bloğu başlığı ("9/A FİKSTÜR", "9/B FİKSTÜR" vb.)
+        if (colA.toUpperCase().includes("FİKSTÜR")) {
+          const block = document.createElement("div");
+          block.className = "class-fixture-block";
+
+          const title = document.createElement("div");
+          title.className = "class-fixture-title";
+          title.textContent = colA;
+          block.appendChild(title);
+
+          const wrapper = document.createElement("div");
+          wrapper.className = "table-wrapper";
+
+          const table = document.createElement("table");
+          table.className = "fixture-table";
+
+          const thead = document.createElement("thead");
+          thead.innerHTML = `
+            <tr>
+              <th>TARİH</th>
+              <th>TAKIM 1</th>
+              <th>TAKIM 2</th>
+              <th>SKOR</th>
+            </tr>
+          `;
+          table.appendChild(thead);
+
+          currentTbody = document.createElement("tbody");
+          table.appendChild(currentTbody);
+
+          wrapper.appendChild(table);
+          block.appendChild(wrapper);
+          container.appendChild(block);
+          return;
         }
 
-        tbody.appendChild(tr);
-      }
+        // Maç satırıysa aktif sınıf tablosuna ekle (B: Tarih, C: Takım 1, D: Takım 2, E: Skor)
+        if (currentTbody && colB && colC && colD) {
+          const tr = document.createElement("tr");
+          [colB, colC, colD, colE].forEach(val => {
+            const td = document.createElement("td");
+            td.textContent = val;
+            tr.appendChild(td);
+          });
+          currentTbody.appendChild(tr);
+        }
+      });
     };
 
     function loadAllData() {
       fetchSheetData("A2:J8", "handleStandings");
-      fetchSheetData("A11:D26", "handleFixture");
+      fetchSheetData("A10:E50", "handleFixture");
     }
 
     loadAllData();
