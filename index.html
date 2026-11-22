@@ -125,12 +125,12 @@
       font-weight: bold;
     }
 
-    /* Fikstür Özel Vurguları */
-    .fixture-table td:nth-child(1) {
+    /* Fikstür Özel Vurguları: 1. Sütun Tarih, 2. Sütun Rakip, 3. Sütun Skor */
+    .fixture-table td:nth-child(2) {
       font-weight: bold;
     }
 
-    /* Fikstür Skor Sütunu */
+    /* Fikstür Skor Sütunu (En Sağda) */
     .fixture-table th:nth-child(3),
     .fixture-table td:nth-child(3) {
       color: #ff6a00;
@@ -270,19 +270,72 @@
       const rows = data.table.rows;
       container.innerHTML = "";
 
-      let currentBlockTitle = "";
-      let currentTbody = null;
+      const getCell = (r, idx) => {
+        if (!r || !r.c || !r.c[idx]) return "";
+        if (r.c[idx].f !== undefined && r.c[idx].f !== null && String(r.c[idx].f).trim() !== "") {
+          return String(r.c[idx].f).trim();
+        }
+        if (r.c[idx].v !== undefined && r.c[idx].v !== null && String(r.c[idx].v).trim() !== "") {
+          return String(r.c[idx].v).trim();
+        }
+        return "";
+      };
 
-      function createClassTable(titleText, headers) {
+      const classOrder = ["9/A", "9/B", "10/A", "10/B", "11/A", "11/B"];
+      const groupedMatches = {
+        "9/A": [],
+        "9/B": [],
+        "10/A": [],
+        "10/B": [],
+        "11/A": [],
+        "11/B": []
+      };
+
+      let activeClass = null;
+
+      rows.forEach(r => {
+        const colA = getCell(r, 0); // Tabloda RAKİP
+        const colB = getCell(r, 1); // Tabloda TARİH
+        const colC = getCell(r, 2); // Tabloda SKOR
+
+        if (!colA && !colB && !colC) return;
+
+        const upperA = colA.toUpperCase();
+        const upperB = colB.toUpperCase();
+
+        // Sınıf başlığı kontrolü: "9/A FİKSTÜR", "9/B FİKSTÜR" vb.
+        const matchedClass = classOrder.find(cls => upperA.includes(cls));
+        if (matchedClass && !colB) {
+          activeClass = matchedClass;
+          return;
+        }
+
+        // Alt sütun başlığı satırını ("RAKİP | TARİH | SKOR") atla
+        if (upperA.includes("RAKİP") || upperB.includes("TARİH")) {
+          return;
+        }
+
+        // Geçerli maç satırı: colA = Rakip, colB = Tarih, colC = Skor
+        if (activeClass && colA && colB) {
+          groupedMatches[activeClass].push({
+            tarih: colB,
+            rakip: colA,
+            skor: colC
+          });
+        }
+      });
+
+      classOrder.forEach(cls => {
+        const matches = groupedMatches[cls];
+        if (!matches || matches.length === 0) return;
+
         const block = document.createElement("div");
         block.className = "class-fixture-block";
 
-        if (titleText) {
-          const title = document.createElement("div");
-          title.className = "class-fixture-title";
-          title.textContent = titleText;
-          block.appendChild(title);
-        }
+        const title = document.createElement("div");
+        title.className = "class-fixture-title";
+        title.textContent = `${cls} FİKSTÜR`;
+        block.appendChild(title);
 
         const wrapper = document.createElement("div");
         wrapper.className = "table-wrapper";
@@ -290,81 +343,29 @@
         const table = document.createElement("table");
         table.className = "fixture-table";
 
-        const thead = document.createElement("thead");
-        thead.innerHTML = `
-          <tr>
-            <th>${headers[0] || "RAKİP"}</th>
-            <th>${headers[1] || "TARİH"}</th>
-            <th>${headers[2] || "SKOR"}</th>
-          </tr>
+        // İstenen sıra: TARİH (en solda) | RAKİP (ortada) | SKOR (en sağda)
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>TARİH</th>
+              <th>RAKİP</th>
+              <th>SKOR</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${matches.map(m => `
+              <tr>
+                <td>${m.tarih}</td>
+                <td>${m.rakip}</td>
+                <td>${m.skor}</td>
+              </tr>
+            `).join("")}
+          </tbody>
         `;
-        table.appendChild(thead);
-
-        const tbody = document.createElement("tbody");
-        table.appendChild(tbody);
 
         wrapper.appendChild(table);
         block.appendChild(wrapper);
         container.appendChild(block);
-
-        return tbody;
-      }
-
-      rows.forEach(r => {
-        if (!r.c) return;
-
-        const getCell = (idx) => {
-          if (!r.c[idx]) return "";
-          if (r.c[idx].f !== undefined && r.c[idx].f !== null && String(r.c[idx].f).trim() !== "") {
-            return String(r.c[idx].f).trim();
-          }
-          if (r.c[idx].v !== undefined && r.c[idx].v !== null && String(r.c[idx].v).trim() !== "") {
-            return String(r.c[idx].v).trim();
-          }
-          return "";
-        };
-
-        const colA = getCell(0);
-        const colB = getCell(1);
-        const colC = getCell(2);
-
-        if (!colA && !colB && !colC) return;
-
-        const upperA = colA.toUpperCase();
-        const upperB = colB.toUpperCase();
-
-        // Sınıf etiketi satırı (ör: "9/A FİKSTÜR" veya "9/A")
-        if ((upperA.includes("FİKSTÜR") || /^\d+\/[AB]$/.test(colA)) && !colB) {
-          currentBlockTitle = upperA.includes("FİKSTÜR") ? colA : `${colA} FİKSTÜR`;
-          currentTbody = null;
-          return;
-        }
-
-        // Sütun başlığı satırı ("RAKİP | TARİH | SKOR")
-        if (upperA.includes("RAKİP") || upperB.includes("TARİH")) {
-          currentTbody = createClassTable(currentBlockTitle, [
-            colA || "RAKİP",
-            colB || "TARİH",
-            colC || "SKOR"
-          ]);
-          return;
-        }
-
-        // Eğer başlık satırı atlandıysa ama maç satırı (rakip + tarih) geldiyse otomatik tablo aç
-        if (!currentTbody && colA && colB) {
-          currentTbody = createClassTable(currentBlockTitle || "FİKSTÜR", ["RAKİP", "TARİH", "SKOR"]);
-        }
-
-        // Maç satırı ekle
-        if (currentTbody && (colA || colB)) {
-          const tr = document.createElement("tr");
-          [colA, colB, colC].forEach(val => {
-            const td = document.createElement("td");
-            td.textContent = val;
-            tr.appendChild(td);
-          });
-          currentTbody.appendChild(tr);
-        }
       });
 
       if (!container.children.length) {
