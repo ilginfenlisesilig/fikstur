@@ -89,6 +89,32 @@
       margin: 0 auto;
     }
 
+    /* Fikstür tablolarında veri girilince kayma olmaması için sabit sütun düzeni */
+    .fixture-table {
+      table-layout: fixed;
+      width: 100%;
+    }
+
+    .fixture-table th:nth-child(1),
+    .fixture-table td:nth-child(1) {
+      width: 26%;
+    }
+
+    .fixture-table th:nth-child(2),
+    .fixture-table td:nth-child(2) {
+      width: 24%;
+    }
+
+    .fixture-table th:nth-child(3),
+    .fixture-table td:nth-child(3) {
+      width: 20%;
+    }
+
+    .fixture-table th:nth-child(4),
+    .fixture-table td:nth-child(4) {
+      width: 30%;
+    }
+
     th, td {
       padding: 12px 10px;
       border-bottom: 1px solid #333;
@@ -301,101 +327,4 @@
         block.className = "class-fixture-block";
 
         const title = document.createElement("div");
-        title.className = "class-fixture-title";
-        title.textContent = cls.title;
-        block.appendChild(title);
-
-        const wrapper = document.createElement("div");
-        wrapper.className = "table-wrapper";
-
-        const table = document.createElement("table");
-        table.className = "fixture-table";
-        table.innerHTML = `
-          <thead>
-            <tr>
-              <th>TARİH</th>
-              <th>RAKİP</th>
-              <th>SKOR</th>
-              <th>SONUÇ</th>
-            </tr>
-          </thead>
-          <tbody id="fixture-body-${cls.id}">
-            <tr>
-              <td colspan="4" class="loading">Yükleniyor...</td>
-            </tr>
-          </tbody>
-        `;
-
-        wrapper.appendChild(table);
-        block.appendChild(wrapper);
-        container.appendChild(block);
-      });
-
-      container.dataset.initialized = "true";
-    }
-
-    function getSonucClass(sonucText) {
-      const normalized = sonucText.toLocaleLowerCase("tr-TR").trim();
-      if (normalized === "galibiyet") return "sonuc-galibiyet";
-      if (normalized === "beraberlik") return "sonuc-beraberlik";
-      if (normalized === "mağlubiyet" || normalized === "maglubiyet") return "sonuc-maglubiyet";
-      return "";
-    }
-
-    classBlocks.forEach(cls => {
-      window[`handleFixture_${cls.id}`] = function(data) {
-        const tbody = document.getElementById(`fixture-body-${cls.id}`);
-        if (!tbody || !data || !data.table || !data.table.rows) return;
-
-        tbody.innerHTML = "";
-        data.table.rows.forEach(r => {
-          if (!r.c) return;
-
-          const getCell = (idx) => {
-            if (!r.c[idx]) return "";
-            if (r.c[idx].f !== undefined && r.c[idx].f !== null && String(r.c[idx].f).trim() !== "") {
-              return String(r.c[idx].f).trim();
-            }
-            if (r.c[idx].v !== undefined && r.c[idx].v !== null && String(r.c[idx].v).trim() !== "") {
-              return String(r.c[idx].v).trim();
-            }
-            return "";
-          };
-
-          const rakip = getCell(0); // E-tabloda A sütunu: RAKİP
-          const tarih = getCell(1); // E-tabloda B sütunu: TARİH
-          const skor  = getCell(2); // E-tabloda C sütunu: SKOR
-          const sonuc = getCell(3); // E-tabloda D sütunu: SONUÇ
-
-          if (!rakip && !tarih) return;
-
-          const tr = document.createElement("tr");
-          // Sitede istenen sıra: TARİH, RAKİP, SKOR, SONUÇ
-          [tarih, rakip, skor, sonuc].forEach((val, idx) => {
-            const td = document.createElement("td");
-            td.textContent = val;
-            if (idx === 3 && val) {
-              const clsName = getSonucClass(val);
-              if (clsName) td.classList.add(clsName);
-            }
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
-      };
-    });
-
-    function loadAllData() {
-      fetchSheetData("A2:J8", "handleStandings");
-      initFixtureContainers();
-      classBlocks.forEach(cls => {
-        fetchSheetData(cls.range, `handleFixture_${cls.id}`, true);
-      });
-    }
-
-    loadAllData();
-    setInterval(loadAllData, 60000);
-  </script>
-
-</body>
-</html>
+        title.className
